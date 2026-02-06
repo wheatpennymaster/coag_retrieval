@@ -229,15 +229,19 @@ def build_outputs_for_panel(
     return pd.Series(outputs, index=df.index, name="text")
 
 
-def load_and_clean_export(excel_path: str, sheet: int | str = 1) -> pd.DataFrame:
+def load_and_clean_export(csv_path: str, sheet: int | str = 1) -> pd.DataFrame:
     """
     shared cleanup
-      - read Excel sheet
+      - read csv sheet
       - drop row 278 (1-indexed)
       - remove rows containing the 'Although the normal dilute Russell' phrase
     """
-    df = pd.read_excel(excel_path, sheet_name=sheet, engine="openpyxl")
-
+    df = pd.read_csv(csv_path)
+    df['Interpretation'] = (
+        df['Interpretation']
+        .str.replace('_x000D_', ' ', regex=False)
+        .str.strip()
+    )
     # Drop row 278 in MATLAB (1-indexed) -> index 277 in Python (0-indexed) IF it exists.
     idx0 = _BAD_ROW_DROP_1INDEXED - 1
     if 0 <= idx0 < len(df):
@@ -438,7 +442,7 @@ def train_embedding_regressor(
 # -----------------------------
 
 def main():
-    excel_path = "sample_data.xlsx"  # <-- set this
+    excel_path = "synthetic_data.csv"  # <-- set this
     df = load_and_clean_export(excel_path, sheet=1)
 
     # Here we keep it simple and rely on positive-filtering only.
